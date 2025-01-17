@@ -7,6 +7,7 @@ import AddEditingNotes from "./AddEditingNotes";
 import Modal from "react-modal";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
+import moment from "moment";
 
 const Home = () => {
   const [openAddEditModal, setOpenAddEditModal] = useState({
@@ -14,6 +15,8 @@ const Home = () => {
     type: "add",
     data: null,
   });
+
+  const [allNotes, setAllNotes] = useState([]);
 
   const [userInfo, setUserInfo] = useState(null);
 
@@ -34,7 +37,20 @@ const Home = () => {
     }
   };
 
+  //Get all notes
+  const getAllNotes = async () => {
+    try {
+      const response = await axiosInstance.get("/get-all-notes");
+      if (response.data && response.data.notes) {
+        setAllNotes(response.data.notes);
+      }
+    } catch (error) {
+      console.log("unexpected error", error);
+    }
+  };
+
   useEffect(() => {
+    getAllNotes();
     getUserInfo();
     return () => {};
   }, []);
@@ -44,16 +60,19 @@ const Home = () => {
       <Navbar userInfo={userInfo} />
       <div className="container mx-auto">
         <div className="grid grid-cols-3 gap-4 mt-8">
-          <NoteCard
-            tittle="Prueba tecnica"
-            date="14 de Diciembre"
-            content="Entrega de prueba tecnica para aplicar a Desarrollador de Software"
-            tags="#Programacion#React"
-            isPinned={true}
-            onEdit={() => {}}
-            onDelete={() => {}}
-            onPinNote={() => {}}
-          />
+          {allNotes.map((item, index) => (
+            <NoteCard
+              key={item._id}
+              tittle={item.title}
+              date={moment(item.createdOn)}
+              content={item.content}
+              tags={item.tags}
+              isPinned={item.isPinned}
+              onEdit={() => {}}
+              onDelete={() => {}}
+              onPinNote={() => {}}
+            />
+          ))}
         </div>
       </div>
 
