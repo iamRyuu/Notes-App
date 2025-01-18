@@ -8,6 +8,7 @@ import Modal from "react-modal";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
 import Toast from "../../components/ToastMessage/Toast";
+import EmptyCard from "../../components/EmptyCard/EmptyCard";
 
 const Home = () => {
   const [openAddEditModal, setOpenAddEditModal] = useState({
@@ -25,6 +26,8 @@ const Home = () => {
   const [allNotes, setAllNotes] = useState([]);
 
   const [userInfo, setUserInfo] = useState(null);
+
+  const [isSearch, setIsSearch] = useState(false);
 
   const navigate = useNavigate();
 
@@ -85,7 +88,7 @@ const Home = () => {
     try {
       const response = await axiosInstance.delete("/delete-note/" + noteId);
       if (response.data && !response.data.error) {
-        showToastMessage("Note deleted successfully" , 'delete');
+        showToastMessage("Note deleted successfully", "delete");
         getAllNotes();
       }
     } catch (error) {
@@ -99,6 +102,27 @@ const Home = () => {
     }
   };
 
+  //Search Notes
+  const onSearchNote = async (query) => {
+    try {
+      const response = await axiosInstance.get("/search-notes", {
+        params: { query: query },
+      });
+
+      if (response.data && response.data.notes) {
+        setIsSearch(true);
+        setAllNotes(response.data.notes);
+      }
+    } catch (error) {
+      console.log("unexpected error", error);
+    }
+  };
+
+  const handleClearSearch = () => {
+    setIsSearch(false);
+    getAllNotes();
+  };
+
   useEffect(() => {
     getAllNotes();
     getUserInfo();
@@ -107,23 +131,31 @@ const Home = () => {
 
   return (
     <>
-      <Navbar userInfo={userInfo} />
+      <Navbar
+        userInfo={userInfo}
+        onSearchNote={onSearchNote}
+        handleClearSearch={handleClearSearch}
+      />
       <div className="container mx-auto">
-        <div className="grid grid-cols-3 gap-4 mt-8">
-          {allNotes.map((item, index) => (
-            <NoteCard
-              key={item._id}
-              tittle={item.title}
-              date={item.createdOn}
-              content={item.content}
-              tags={item.tags}
-              isPinned={item.isPinned}
-              onEdit={() => handleEditNote(item)}
-              onDelete={() => deleteNote(item)}
-              onPinNote={() => {}}
-            />
-          ))}
-        </div>
+        {allNotes.length > 0 ? (
+          <div className="grid grid-cols-3 gap-4 mt-8">
+            {allNotes.map((item, index) => (
+              <NoteCard
+                key={item._id}
+                tittle={item.title}
+                date={item.createdOn}
+                content={item.content}
+                tags={item.tags}
+                isPinned={item.isPinned}
+                onEdit={() => handleEditNote(item)}
+                onDelete={() => deleteNote(item)}
+                onPinNote={() => {}}
+              />
+            ))}
+          </div>
+        ) : (
+          <EmptyCard />
+        )}
       </div>
 
       <button
